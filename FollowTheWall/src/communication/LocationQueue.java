@@ -1,5 +1,8 @@
 package communication;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 
 /**
@@ -67,8 +70,30 @@ public class LocationQueue {
     /**
      * Write to file. Robot passes its id and message. The message is written to the file.
      *
+     * @param id
+     * @param message
+     * @throws Exception
      */
-    public static void writeMessage(int id, String message){
+    public static void writeMessage(int id, String message) throws Exception{
+
+        //if the id == 1 write to file 1
+        //if the id == 2 write to file 2
+        String fileName;
+        if(id == 1){
+            fileName = "robot_queues/robot1_input.txt";
+        }else if (id == 2){
+            fileName = "robot_queues/robot2_input.txt";
+        }else{
+            throw new Exception("not a valid robot id");
+        }
+
+        try{
+            PrintWriter writer = new PrintWriter(new BufferedWriter(new FileWriter(fileName, true)));
+            writer.println(message + "\n");
+            writer.close();
+        }catch (Exception e){
+            System.out.println(e.getMessage());
+        }
 
     }
 
@@ -76,8 +101,23 @@ public class LocationQueue {
     /**
      * Read from file. Robot passes its id, returns the oldest message from the opposite robot's input.
      *
+     * @param id
+     * @return
+     * @throws Exception
      */
-    public static String readMessage(int id){
+    public static String readMessage(int id) throws Exception{
+
+        String fileName;
+        if(id == 1){
+            fileName = "robot_queues/robot1_input.txt";
+        }else if (id == 2){
+            fileName = "robot_queues/robot2_input.txt";
+        }else{
+            throw new Exception("not a valid robot id");
+        }
+
+        
+
         return new String();
     }
 
