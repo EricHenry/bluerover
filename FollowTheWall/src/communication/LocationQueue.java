@@ -10,7 +10,7 @@ import java.util.ArrayList;
  */
 public class LocationQueue {
 
-    private ArrayList<String[]> robotIDs = new ArrayList<String[]>();
+    private static ArrayList<String[]> robotIDs = new ArrayList<String[]>();
 
     //register robot
 
@@ -21,7 +21,7 @@ public class LocationQueue {
      * @return              - the id of the given robot
      * @throws Exception    - if the max # of registrations have been reached
      */
-    public int registerRobot(String robotName) throws Exception{
+    public static int registerRobot(String robotName) throws Exception{
         int numberOfRobots = robotIDs.size();
 
         //can only have a max of 2 robots registered right now
@@ -48,7 +48,7 @@ public class LocationQueue {
      * @return              - the id of the given robot
      * @throws Exception    - if the robot's name was not found
      */
-    public int getID(String robotName)throws Exception{
+    public static int getID(String robotName)throws Exception{
 
         for(int i = 0; i < robotIDs.size(); i++){
             String[] currentArray = robotIDs.get(i);
@@ -109,12 +109,13 @@ public class LocationQueue {
 
         String fileName;
         if(id == 1){
-            fileName = "robot_queues/robot1_input.txt";
-        }else if (id == 2){
             fileName = "robot_queues/robot2_input.txt";
+        }else if (id == 2){
+            fileName = "robot_queues/robot1_input.txt";
         }else{
             throw new Exception("not a valid robot id");
         }
+
 
         
 
