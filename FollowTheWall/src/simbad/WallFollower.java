@@ -33,6 +33,7 @@ public class WallFollower extends Agent {
 
     private boolean missionComplete = false;
     private boolean searching = true; //searching for the target
+    boolean foundWall = false;
 
     public WallFollower(Vector3d position, String name){
         super(position, name);
@@ -48,12 +49,70 @@ public class WallFollower extends Agent {
     /** This method is called by the simulator engine on reset. */
     public void initBehavior() {
         camera.setUpdateOnEachFrame(true);
+        sonars.setUpdateOnEachFrame(true);
 
     }
 
     /** This method is call cyclically (20 times per second)  by the simulator engine. */
     public void performBehavior() {
 
+
+        //find wall
+        double left = sonars.getLeftQuadrantMeasurement();
+        //double left = sonars.getQuadrantMeasurement(Math.PI / 2, Math.PI / 2);
+        double right = sonars.getFrontRightQuadrantMeasurement();
+        double front = sonars.getFrontQuadrantMeasurement();
+
+        if(!foundWall){
+            setTranslationalVelocity(0);
+            if(sonars.oneHasHit()){
+                //rotate until wall has been found on the front right quadrant
+                if(sonars.getLeftQuadrantHits() > 1 ) {
+                    foundWall = true;
+                    System.out.println("WALL FOUND");
+                    followWall = true;
+                    setRotationalVelocity(0);
+                }else if(getRotationalVelocity() == 0) {
+                    System.out.println("rotaion not 0");
+                    setRotationalVelocity(Math.PI / 6);
+                }
+            }
+
+        }
+
+        if(followWall){
+            //System.out.println("followWall");
+            setTranslationalVelocity(1);
+            //avoid obsticles
+            if(front < 1.5){
+              //  System.out.println("hit front");
+                //setRotationalVelocity(11*Math.PI / 6);
+            }else {
+
+                if (left > 1 && left < 5) {
+                    //turn towards the wall
+                    System.out.println("Turn towards the wall, front left is: " + left);
+                    setRotationalVelocity(Math.PI / 6);
+                } else if (left < 0.75) {
+                    //turn away from the wall
+                    System.out.println("Turn away the wall, front left is: " + left +"\n\t sensor angle: " + sonars.getSensorAngle(3));
+                    setRotationalVelocity(-Math.PI / 6);
+                }
+            }
+
+        }
+
+        //follow wall
+        /*if(!followingWall && (getCounter() % 50 == 0)){
+            setRotationalVelocity(0.5 - (0.1 * Math.random()));
+
+        }else{
+
+
+
+        }
+
+        /*
         if(!missionComplete) {
             //if the item isnt found
             //  two behaviors: either follow a wall OR move randomly
@@ -86,7 +145,7 @@ public class WallFollower extends Agent {
                 System.out.println("Total Distance: " + getOdometer());
             }
 
-        }
+        }*/
         
     }
 
@@ -156,7 +215,7 @@ public class WallFollower extends Agent {
 
     }
 
-    /**
+    /**s
     private void scanForTarget(){
 
         scanning = true;

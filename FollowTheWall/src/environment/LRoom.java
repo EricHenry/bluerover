@@ -1,5 +1,6 @@
 package environment;
 
+import simbad.WallFollower;
 import simbad.sim.Box;
 import simbad.sim.EnvironmentDescription;
 import simbad.sim.Wall;
@@ -19,6 +20,8 @@ public class LRoom extends EnvironmentDescription {
 
         lShapedRoom(boxLocation);
 
+        WallFollower robot1 = new WallFollower(new Vector3d(-9,0,-9), "chappie");
+        add(robot1);
     }
 
     public void lShapedRoom(Vector3d boxLocation) {
