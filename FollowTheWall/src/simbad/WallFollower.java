@@ -31,9 +31,13 @@ public class WallFollower extends Agent {
     private boolean followingWall = false;
     private boolean movingRandomly = false;
 
+    private boolean adjusting = false;
+
     private boolean missionComplete = false;
     private boolean searching = true; //searching for the target
     boolean foundWall = false;
+
+    boolean start = true;
 
     public WallFollower(Vector3d position, String name){
         super(position, name);
@@ -44,12 +48,18 @@ public class WallFollower extends Agent {
         bumpers = RobotFactory.addBumperBeltSensor(this, 12);
         sonars = RobotFactory.addSonarBeltSensor(this, 12);
         camera = RobotFactory.addCameraSensor(this);
+
+
     }
 
     /** This method is called by the simulator engine on reset. */
     public void initBehavior() {
         camera.setUpdateOnEachFrame(true);
         sonars.setUpdateOnEachFrame(true);
+
+       // rotateY(Math.PI / 4);
+
+        //setRotationalVelocity(Math.PI / 6);
 
     }
 
@@ -63,7 +73,13 @@ public class WallFollower extends Agent {
         double right = sonars.getFrontRightQuadrantMeasurement();
         double front = sonars.getFrontQuadrantMeasurement();
 
-        if(!foundWall){
+        if(start){
+            System.out.println("START");
+            start = false;
+            setRotationalVelocity(Math.PI / 6);
+        }
+
+        if(foundWall){
             setTranslationalVelocity(0);
             if(sonars.oneHasHit()){
                 //rotate until wall has been found on the front right quadrant
@@ -80,6 +96,65 @@ public class WallFollower extends Agent {
 
         }
 
+        //setRotationalVelocity(Math.PI / 6);
+        //System.out.println(sonars.getSensorAngle(3));
+        System.out.println(sonars.getMeasurement(2));
+        System.out.println(sonars.getMeasurement(3));
+        System.out.println(sonars.getMeasurement(4));
+
+        double sonar2 = sonars.getMeasurement(2);
+        double sonar3 = sonars.getMeasurement(3);
+        double sonar4 = sonars.getMeasurement(4);
+
+        //keep heading straight
+        if(!((sonar4-0.2) <= sonar2 && sonar2 <= (sonar4 + 0.2)) && !adjusting){
+            //outside courner case
+            System.out.println("Off Heading! Adjust");
+                setTranslationalVelocity(0);
+
+            setRotationalVelocity(0);
+            adjusting = true;
+        }else if(((sonar4-0.1) <= sonar2 && sonar2 <= (sonar4 + 0.1)) && adjusting){
+            adjusting = false;
+            System.out.println("ON Heading! Stop Adjusting");
+            setRotationalVelocity(0);
+            setTranslationalVelocity(1);
+        }else {
+            if(Double.isInfinite(sonar2) || Double.isInfinite(sonar4)){
+                System.out.println("Sonar 2 or 4 is infinite");
+               setTranslationalVelocity(0.3);
+            }else {}
+        }
+
+        //heading not straight adjust heading
+        if(adjusting){
+            System.out.println("ADJUSTING");
+            if(sonar2 > sonar4+0.1 || (Double.isInfinite(sonar4) && sonar2 > .75)) {
+                System.out.println("Rotate left");
+                setRotationalVelocity(Math.PI / 6);
+            }else if (sonar2 < sonar4-0.1 || (Double.isInfinite(sonar4) && sonar2 < .75)){
+                System.out.println("Rotate right");
+                if(Double.isInfinite(sonar4)){
+                    setTranslationalVelocity(0);
+                }
+                setRotationalVelocity(-Math.PI / 6);
+            }else{
+                //adjusting = false;
+            }
+        }
+
+        //stay close to the wall
+        if(!(0.7 < sonar3 && sonar3 < 0.73) && getTranslationalVelocity() != 0){
+            if(sonar3 < 0.7) {
+                setRotationalVelocity(-Math.PI / 6);
+            }else if(sonar3 > 0.73){
+                setRotationalVelocity(Math.PI / 6);
+            }
+        }else if((0.7 < sonar3 && sonar3 < 0.73) && !adjusting){
+            setRotationalVelocity(0);
+        }
+
+        /*
         if(followWall){
             //System.out.println("followWall");
             setTranslationalVelocity(1);
@@ -101,7 +176,7 @@ public class WallFollower extends Agent {
             }
 
         }
-
+*/
         //follow wall
         /*if(!followingWall && (getCounter() % 50 == 0)){
             setRotationalVelocity(0.5 - (0.1 * Math.random()));
