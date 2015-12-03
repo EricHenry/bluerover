@@ -12,6 +12,7 @@ import java.awt.image.BufferedImage;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.PrintWriter;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * Created by root on 11/24/15.
@@ -28,8 +29,7 @@ public class WallFollower extends Agent {
 
     private boolean moveRandomly = false;
     private boolean followWall = true;
-    private boolean followingWall = false;
-    private boolean movingRandomly = false;
+    private boolean findWall= false;
 
     private boolean adjusting = false;
 
@@ -38,6 +38,17 @@ public class WallFollower extends Agent {
     boolean foundWall = false;
 
     boolean start = true;
+
+    int lastAction = 0;
+
+    private int originalRedPixelCount = 100;
+    int i = 0;
+    int[] highestPxlCntLoc = new int[5];
+    private boolean scanning = false;
+    private boolean seenBlue = false;
+    private int currentBluePixels = 0;
+
+    private int sameLocationCount = 0;
 
     public WallFollower(Vector3d position, String name){
         super(position, name);
@@ -66,51 +77,199 @@ public class WallFollower extends Agent {
     /** This method is call cyclically (20 times per second)  by the simulator engine. */
     public void performBehavior() {
 
+        camera.setUpdatePerSecond(1);
 
+        /*
         //find wall
         double left = sonars.getLeftQuadrantMeasurement();
         //double left = sonars.getQuadrantMeasurement(Math.PI / 2, Math.PI / 2);
         double right = sonars.getFrontRightQuadrantMeasurement();
         double front = sonars.getFrontQuadrantMeasurement();
-
+*/
         if(start){
             System.out.println("START");
             start = false;
+            setTranslationalVelocity(1);
             setRotationalVelocity(Math.PI / 6);
         }
 
-        if(foundWall){
-            setTranslationalVelocity(0);
-            if(sonars.oneHasHit()){
-                //rotate until wall has been found on the front right quadrant
-                if(sonars.getLeftQuadrantHits() > 1 ) {
-                    foundWall = true;
-                    System.out.println("WALL FOUND");
-                    followWall = true;
-                    setRotationalVelocity(0);
-                }else if(getRotationalVelocity() == 0) {
-                    System.out.println("rotaion not 0");
-                    setRotationalVelocity(Math.PI / 6);
-                }
-            }
 
-        }
-
+/*
         //setRotationalVelocity(Math.PI / 6);
         //System.out.println(sonars.getSensorAngle(3));
         System.out.println(sonars.getMeasurement(2));
         System.out.println(sonars.getMeasurement(3));
         System.out.println(sonars.getMeasurement(4));
+*/
+
+
+
+
+        if(!missionComplete) {
+            //if the item isnt found
+            //  two behaviors: either follow a wall OR move randomly
+            if (searching) {
+                //follow wall-
+                // choose either the right or left side
+                // once side is chosen find a wall,
+                //  keep wall at a certain distance
+                //  continue until object is seen or time to move randomly has occurred
+
+                //move randomly if the counter hits this
+                //check the current image to for the target
+                BufferedImage currentCameraImage = camera.createCompatibleImage();
+                double redRatio = scanCameraFeed(currentCameraImage);
+
+                //check if the robot's front proximity sensor
+                double frontRange = sonars.getFrontQuadrantMeasurement();
+
+                System.out.println("currentBLuePixels: " + currentBluePixels);
+
+                //the target has been found if 85% of the screen is the target
+                //  or the robot is close to the target with at least 65% of its vision is the target
+                if (redRatio >= .85 || (redRatio >= .65 && frontRange < .85)) {
+                    searching = false;
+                    System.out.println("HIT! RESULT: " + searching);
+
+                    //if the target wasn't found, check if the target was at least seen.
+                    //  and attempt to move toward it
+                } else if (currentBluePixels > 1 || seenBlue) {
+
+                    // System.out.println("INSIDE RED Pixel Count\n\tPixelcount is: " + currentRedPixels);
+
+                    if (seenBlue)
+                        System.out.println("SeenRed");
+                    else
+                        System.out.println("Current Red pixels > 1");
+
+                    seenBlue = true;
+
+                    if (!checkIfStuck()) {
+
+
+                        if (bumpers.oneHasHit() && redRatio < .25) {
+                            System.out.println("\t seen less red - bumpers has one hit");
+                            recoverFromCollision();
+
+                        } else if (sonars.oneHasHit() && redRatio < .25) {
+                            System.out.println("\t seen less red - sonar has one hit");
+                            avoidCollision();
+                        }
+
+                        if (getCounter() % 5 == 0) {
+
+                            if (originalRedPixelCount >= currentBluePixels + 10 || scanning) {
+
+                                System.out.println("Seeing less red, React");
+                                scanForTarget();
+
+                            } else {
+
+                                System.out.println("Continuing to Red target");
+                                setTranslationalVelocity(0.8);
+
+                                if (!scanning) {
+                                    originalRedPixelCount = currentBluePixels;
+                                }
+                            }
+
+                        }
+
+
+                    }
+                } else if (!seenBlue) {
+                    if(getCounter() % 500 == 0 && getCounter() > 1 && !findWall ){
+                    /*if(moveRandomly){
+                        randomizeMovement();
+                        moveRandomly = false;
+                    }else if(movingRandomly){
+                        //detect for collisions
+                    }*/
+                        System.out.println("MOVE RANDOMLY");
+                        followWall = false;
+                        findWall = false;
+                        moveRandomly= true;
+
+
+                        int rotateTo = ThreadLocalRandom.current().nextInt(1, 7 + 1);
+
+                        //rotateY(0.5 - (0.1 * Math.random()));
+                        switch(rotateTo){
+                            case 1:
+                                rotateY(11 * Math.PI / 6);
+                                break;
+                            case 2:
+                                rotateY(7 * Math.PI / 4);
+                                break;
+                            case 3:
+                                rotateY(5 * Math.PI / 3);
+                                break;
+                            case 4:
+                                rotateY(3 * Math.PI / 2);
+                                break;
+                            case 5:
+                                rotateY(4 * Math.PI / 3);
+                                break;
+                            case 6:
+                                rotateY(5 * Math.PI / 4);
+                                break;
+                            case 7:
+                                rotateY(7 * Math.PI / 6);
+                                break;
+                        }
+
+                    }else if(getCounter() % 250 == 0){
+                        //follow wall
+                        followWall = true;
+                        foundWall = false;
+                        moveRandomly = false;
+                    }
+
+                    if(followWall == true && foundWall == false)
+                        findWall = true;
+                    else if(followWall == true){
+                        System.out.println("FOLLOW WALL");
+                        //setTranslationalVelocity(1);
+                        followWall();
+                    }
+                    if(findWall) {
+                        searchForWall();
+                    }
+
+                    if(moveRandomly){
+                        System.out.println("INIT move randomly");
+                        moveRandomly();
+                    }
+                }
+
+            }else{
+                setTranslationalVelocity(0);
+                setRotationalVelocity(0);
+                double timeToGoal = getLifeTime();
+                missionComplete = true;
+                //System.out.println("Test: " + boxCoordinates);
+                System.out.println("Total Duration: " + timeToGoal);
+                System.out.println("Total Distance: " + getOdometer());
+            }
+
+        }
+        
+    }
+
+    /**
+     *
+     */
+    private void followWall(){
 
         double sonar2 = sonars.getMeasurement(2);
         double sonar3 = sonars.getMeasurement(3);
         double sonar4 = sonars.getMeasurement(4);
-
+        System.out.println("\tFollowing");
         //keep heading straight
         if(!((sonar4-0.2) <= sonar2 && sonar2 <= (sonar4 + 0.2)) && !adjusting){
             //outside courner case
             System.out.println("Off Heading! Adjust");
-                setTranslationalVelocity(0);
+            setTranslationalVelocity(0);
 
             setRotationalVelocity(0);
             adjusting = true;
@@ -122,7 +281,7 @@ public class WallFollower extends Agent {
         }else {
             if(Double.isInfinite(sonar2) || Double.isInfinite(sonar4)){
                 System.out.println("Sonar 2 or 4 is infinite");
-               setTranslationalVelocity(0.3);
+                setTranslationalVelocity(0.3);
             }else {}
         }
 
@@ -132,7 +291,7 @@ public class WallFollower extends Agent {
             if(sonar2 > sonar4+0.1 || (Double.isInfinite(sonar4) && sonar2 > .75)) {
                 System.out.println("Rotate left");
                 setRotationalVelocity(Math.PI / 6);
-            }else if (sonar2 < sonar4-0.1 || (Double.isInfinite(sonar4) && sonar2 < .75)){
+            }else if (sonar2 < sonar4-0.1 || (Double.isInfinite(sonar4) && sonar2 < .75) || (Double.isInfinite(sonar4) && sonars.hasHit(1))){
                 System.out.println("Rotate right");
                 if(Double.isInfinite(sonar4)){
                     setTranslationalVelocity(0);
@@ -153,78 +312,38 @@ public class WallFollower extends Agent {
         }else if((0.7 < sonar3 && sonar3 < 0.73) && !adjusting){
             setRotationalVelocity(0);
         }
-
-        /*
-        if(followWall){
-            //System.out.println("followWall");
-            setTranslationalVelocity(1);
-            //avoid obsticles
-            if(front < 1.5){
-              //  System.out.println("hit front");
-                //setRotationalVelocity(11*Math.PI / 6);
-            }else {
-
-                if (left > 1 && left < 5) {
-                    //turn towards the wall
-                    System.out.println("Turn towards the wall, front left is: " + left);
-                    setRotationalVelocity(Math.PI / 6);
-                } else if (left < 0.75) {
-                    //turn away from the wall
-                    System.out.println("Turn away the wall, front left is: " + left +"\n\t sensor angle: " + sonars.getSensorAngle(3));
-                    setRotationalVelocity(-Math.PI / 6);
-                }
-            }
-
-        }
-*/
-        //follow wall
-        /*if(!followingWall && (getCounter() % 50 == 0)){
-            setRotationalVelocity(0.5 - (0.1 * Math.random()));
-
-        }else{
-
-
-
-        }
-
-        /*
-        if(!missionComplete) {
-            //if the item isnt found
-            //  two behaviors: either follow a wall OR move randomly
-            if (searching) {
-                //follow wall-
-                // choose either the right or left side
-                // once side is chosen find a wall,
-                //  keep wall at a certain distance
-                //  continue until object is seen or time to move randomly has occurred
-
-                //move randomly if the counter hits this
-                if(getCounter() % 250 == 0 || movingRandomly){
-                    if(moveRandomly){
-                        randomizeMovement();
-                        moveRandomly = false;
-                    }else if(movingRandomly){
-                        //detect for collisions
-                    }
-
-                }else if(getCounter() % 49 == 0){
-                    //follow wall
-
-                }
-            }else{
-                setTranslationalVelocity(0);
-                double timeToGoal = getLifeTime();
-                missionComplete = true;
-                //System.out.println("Test: " + boxCoordinates);
-                System.out.println("Total Duration: " + timeToGoal);
-                System.out.println("Total Distance: " + getOdometer());
-            }
-
-        }*/
-        
     }
 
-    public void randomizeMovement(){
+    private void searchForWall(){
+
+            if(sonars.oneHasHit()){
+
+                boolean proceed = false;
+
+                for(int i = 0; i < sonars.getNumSensors(); i++){
+                    if(sonars.hasHit(i) && sonars.getMeasurement(i) < .75)
+                        proceed = true;
+                }
+                if(proceed) {
+                    //rotate until wall has been found on the front right quadrant
+                    setTranslationalVelocity(0);
+                    //setRotationalVelocity();
+                    if (sonars.getLeftQuadrantHits() > 1) {
+                        foundWall = true;
+                        System.out.println("WALL FOUND");
+                        findWall = false;
+                        setRotationalVelocity(0);
+                        setTranslationalVelocity(1);
+                    } else if (getRotationalVelocity() == 0) {
+                        System.out.println("rotaion not 0");
+                        setRotationalVelocity(Math.PI / 6);
+                    }
+                }
+            }else{
+                setRotationalVelocity(0);
+                setTranslationalVelocity(1);
+            }
+
 
     }
 
@@ -242,8 +361,8 @@ public class WallFollower extends Agent {
         int totalPixelcount = maxY * maxX;
         int totalBluePixels = 0;
 
-        // System.out.println("height: " + currentCameraImage.getHeight() +
-        //         ", width: " + currentCameraImage.getWidth());
+         System.out.println("height: " + currentCameraImage.getHeight() +
+                 ", width: " + currentCameraImage.getWidth());
 
         for (int x = 0; x < maxX; x++) {
 
@@ -260,9 +379,9 @@ public class WallFollower extends Agent {
             }
         }
 
-        //System.out.println("total pixelcount: " + totalPixelcount +
-        //        ", total Red pixels: " + totalRedPixels);
-        //currentBluePixels = totalBluePixels;
+        System.out.println("total pixelcount: " + totalPixelcount +
+                ", total Red pixels: " + totalBluePixels);
+        currentBluePixels = totalBluePixels;
         return (double)totalBluePixels / (double)totalPixelcount;
     }
 
@@ -290,7 +409,77 @@ public class WallFollower extends Agent {
 
     }
 
-    /**s
+    /**
+     *
+     */
+    private void moveRandomly(){
+        if (bumpers.oneHasHit()) {
+
+            recoverFromCollision();
+            lastAction = getCounter();
+
+        } else if (sonars.oneHasHit()) {
+            avoidCollision();
+            lastAction = getCounter();
+        } else {
+            setTranslationalVelocity(0.8);
+            setRotationalVelocity(0);
+        }
+
+        // System.out.println("counter = " + getCounter() + ", lastAction = " + (lastAction));
+        if ((getCounter() % 150 == 0) && lastAction < getCounter()) {
+            System.out.println("HIT RANDOM");
+                       /* double rand = Math.random() * 1;
+                        if(Math.round(rand) == 1)
+                            setRotationalVelocity(-1 - (0.1 * Math.random()));
+                        else
+                            setRotationalVelocity(1 - (0.1 * Math.random()));
+                        */
+            setRotationalVelocity(0.5 - (0.1 * Math.random()));
+            setTranslationalVelocity(0);
+
+            lastAction = getCounter();
+        }
+    }
+
+    private void recoverFromCollision(){
+
+        setTranslationalVelocity(-0.1);
+        //setRotationalVelocity(0.5 - (0.1 * Math.random()));
+
+
+        if(seenBlue){
+            scanning = true;
+            setRotationalVelocity(0.5 - (0.1 * Math.random()));
+        }else {
+            setRotationalVelocity(0.5 - (0.1 * Math.random()));
+        }
+
+    }
+
+    private void avoidCollision(){
+        // reads the three front quadrants
+        double left = sonars.getFrontLeftQuadrantMeasurement();
+        double right = sonars.getFrontRightQuadrantMeasurement();
+        double front = sonars.getFrontQuadrantMeasurement();
+        // if obstacle near
+        if ((front < 0.7) || (left < 0.7) || (right < 0.7)) {
+            if (left < right)
+                setRotationalVelocity(-1 - (0.1 * Math.random()));
+            else
+                setRotationalVelocity(1 - (0.1 * Math.random()));
+            setTranslationalVelocity(0);
+
+
+        } else {
+            setRotationalVelocity(0);
+            setTranslationalVelocity(0.8);
+        }
+    }
+
+    /**
+     *
+     */
     private void scanForTarget(){
 
         scanning = true;
@@ -359,7 +548,7 @@ public class WallFollower extends Agent {
                 }
 
                 if(highestPxlCntLoc[highest] == 0)
-                    seenRed = false;
+                    seenBlue = false;
                 i = 0;
                 scanning = false;
                 originalRedPixelCount = highestPxlCntLoc[highest];
@@ -373,5 +562,21 @@ public class WallFollower extends Agent {
 
 
     }
-    */
+
+    private boolean checkIfStuck(){
+
+        if ((currentCords.getX() == lastCoords.getX() && currentCords.getZ() == lastCoords.getZ())) {
+            System.out.println("IN SAME LOCATION: " + sameLocationCount);
+            sameLocationCount += 1;
+        }
+
+
+        if(sameLocationCount == 20) {
+            sameLocationCount = 0;
+            return true;
+        } else {
+            return false;
+        }
+
+    }
 }

@@ -52,11 +52,12 @@ public class LRoom extends EnvironmentDescription {
         rightWall.setColor(new Color3f(0,0,0));
         add(rightWall);
 
-        /*
+
         Box target = new Box(boxLocation, new Vector3f(1, 1, 1),
                 this);
         target.setColor(new Color3f(0,0,256));
-
+        add(target);
+/*
         Box b2 = new Box(new Vector3d(1,0,-1), new Vector3f(1, 1, 1), this);
         b2.setColor(new Color3f(0,256,0));
 
@@ -69,7 +70,7 @@ public class LRoom extends EnvironmentDescription {
         Box b5 = new Box(new Vector3d(7,0,-5), new Vector3f(1, 1, 1), this);
         b5.setColor(new Color3f(0,256,0));
 
-        add(target);
+
         add(b2);
         add(b3);
         add(b4);
