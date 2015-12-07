@@ -142,6 +142,12 @@ public class WallFollower extends Agent {
                     //  and attempt to move toward it
                 } else if (currentBluePixels > 1 || seenBlue) {
 
+                    Point3d currentCoords = new Point3d();
+
+                    getCoords(currentCoords);
+
+                    RobotCommunication.addLocation(robotID, currentCoords);
+
                     // System.out.println("INSIDE RED Pixel Count\n\tPixelcount is: " + currentRedPixels);
 
                     /**if (seenBlue)

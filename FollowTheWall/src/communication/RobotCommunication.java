@@ -59,8 +59,11 @@ public class RobotCommunication {
 
     public static void addLocation(int robotID, Point3d currentLocation){
         if(robotID == 1){
+            System.out.println("ROBOT 1\n\tcurrent location added - X:= " + currentLocation.getX() + ", Y: " + currentLocation.getZ());
             robot1Location.add(currentLocation);
+
         }else if(robotID == 2){
+            System.out.println("ROBOT 2\n\tcurrent location added - X:= " + currentLocation.getX() + ", Y: " + currentLocation.getZ());
             robot2Location.add(currentLocation);
         }
     }
