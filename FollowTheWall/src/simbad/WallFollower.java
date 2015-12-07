@@ -50,6 +50,10 @@ public class WallFollower extends Agent {
 
     private int sameLocationCount = 0;
 
+    private enum Algorithm {FOLLOWWALL, MOVERADOMLY, GOTOROBOT, BLINE};
+    private Algorithm whosTurn = Algorithm.FOLLOWWALL;
+
+
     public WallFollower(Vector3d position, String name){
         super(position, name);
 
@@ -94,17 +98,6 @@ public class WallFollower extends Agent {
         }
 
 
-/*
-        //setRotationalVelocity(Math.PI / 6);
-        //System.out.println(sonars.getSensorAngle(3));
-        System.out.println(sonars.getMeasurement(2));
-        System.out.println(sonars.getMeasurement(3));
-        System.out.println(sonars.getMeasurement(4));
-*/
-
-
-
-
         if(!missionComplete) {
             //if the item isnt found
             //  two behaviors: either follow a wall OR move randomly
@@ -123,13 +116,13 @@ public class WallFollower extends Agent {
                 //check if the robot's front proximity sensor
                 double frontRange = sonars.getFrontQuadrantMeasurement();
 
-                System.out.println("currentBLuePixels: " + currentBluePixels);
+                //System.out.println("currentBLuePixels: " + currentBluePixels);
 
                 //the target has been found if 85% of the screen is the target
                 //  or the robot is close to the target with at least 65% of its vision is the target
                 if (redRatio >= .85 || (redRatio >= .65 && frontRange < .85)) {
                     searching = false;
-                    System.out.println("HIT! RESULT: " + searching);
+                    //System.out.println("HIT! RESULT: " + searching);
 
                     //if the target wasn't found, check if the target was at least seen.
                     //  and attempt to move toward it
@@ -137,10 +130,10 @@ public class WallFollower extends Agent {
 
                     // System.out.println("INSIDE RED Pixel Count\n\tPixelcount is: " + currentRedPixels);
 
-                    if (seenBlue)
+                    /**if (seenBlue)
                         System.out.println("SeenRed");
                     else
-                        System.out.println("Current Red pixels > 1");
+                        System.out.println("Current Red pixels > 1"); */
 
                     seenBlue = true;
 
@@ -148,11 +141,11 @@ public class WallFollower extends Agent {
 
 
                         if (bumpers.oneHasHit() && redRatio < .25) {
-                            System.out.println("\t seen less red - bumpers has one hit");
+                            //System.out.println("\t seen less red - bumpers has one hit");
                             recoverFromCollision();
 
                         } else if (sonars.oneHasHit() && redRatio < .25) {
-                            System.out.println("\t seen less red - sonar has one hit");
+                            //System.out.println("\t seen less red - sonar has one hit");
                             avoidCollision();
                         }
 
@@ -160,12 +153,12 @@ public class WallFollower extends Agent {
 
                             if (originalRedPixelCount >= currentBluePixels + 10 || scanning) {
 
-                                System.out.println("Seeing less red, React");
+                               // System.out.println("Seeing less red, React");
                                 scanForTarget();
 
                             } else {
 
-                                System.out.println("Continuing to Red target");
+                                //System.out.println("Continuing to Red target");
                                 setTranslationalVelocity(0.8);
 
                                 if (!scanning) {
@@ -185,7 +178,7 @@ public class WallFollower extends Agent {
                     }else if(movingRandomly){
                         //detect for collisions
                     }*/
-                        System.out.println("MOVE RANDOMLY");
+                        //System.out.println("MOVE RANDOMLY");
                         followWall = false;
                         findWall = false;
                         moveRandomly= true;
@@ -228,7 +221,7 @@ public class WallFollower extends Agent {
                     if(followWall == true && foundWall == false)
                         findWall = true;
                     else if(followWall == true){
-                        System.out.println("FOLLOW WALL");
+                        //System.out.println("FOLLOW WALL");
                         //setTranslationalVelocity(1);
                         followWall();
                     }
@@ -237,7 +230,7 @@ public class WallFollower extends Agent {
                     }
 
                     if(moveRandomly){
-                        System.out.println("INIT move randomly");
+                        //System.out.println("INIT move randomly");
                         moveRandomly();
                     }
                 }

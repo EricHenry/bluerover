@@ -8,7 +8,7 @@ import java.util.ArrayList;
 /**
  * Created by kilsuf on 11/28/15.
  */
-public class LocationQueue {
+public class RobotCom {
 
     private static ArrayList<String[]> robotIDs = new ArrayList<String[]>();
 

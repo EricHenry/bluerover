@@ -22,6 +22,10 @@ public class LRoom extends EnvironmentDescription {
 
         WallFollower robot1 = new WallFollower(new Vector3d(-9,0,-9), "chappie");
         add(robot1);
+
+
+
+
     }
 
     public void lShapedRoom(Vector3d boxLocation) {
