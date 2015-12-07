@@ -1,5 +1,6 @@
 package simbad;
 
+import communication.RobotCommunication;
 import simbad.sim.Agent;
 import simbad.sim.CameraSensor;
 import simbad.sim.RangeSensorBelt;
@@ -20,6 +21,7 @@ import java.util.concurrent.ThreadLocalRandom;
 public class WallFollower extends Agent {
 
     private String robotName;
+    private int robotID;
 
     private RangeSensorBelt sonars, bumpers;
     private CameraSensor camera;
@@ -53,12 +55,23 @@ public class WallFollower extends Agent {
     private enum Algorithm {FOLLOWWALL, MOVERADOMLY, GOTOROBOT, BLINE};
     private Algorithm whosTurn = Algorithm.FOLLOWWALL;
 
+    //RobotCommunication robcom;
+    private String side;
 
-    public WallFollower(Vector3d position, String name){
+
+    public WallFollower(Vector3d position, String name, String side){
         super(position, name);
 
         robotName = name;
 
+        this.side = side;
+
+        try {
+            robotID = RobotCommunication.registerRobot(name);
+            System.out.println("Registered Robot: " + name + " with id: " + robotID);
+        }catch(Exception ex){
+            System.out.println(ex.getMessage());
+        }
         // Add sensors
         bumpers = RobotFactory.addBumperBeltSensor(this, 12);
         sonars = RobotFactory.addSonarBeltSensor(this, 12);
@@ -72,7 +85,8 @@ public class WallFollower extends Agent {
         camera.setUpdateOnEachFrame(true);
         sonars.setUpdateOnEachFrame(true);
 
-       // rotateY(Math.PI / 4);
+        if(side.equalsIgnoreCase("right"))
+            rotateY(3 * Math.PI / 2);
 
         //setRotationalVelocity(Math.PI / 6);
 
@@ -223,10 +237,10 @@ public class WallFollower extends Agent {
                     else if(followWall == true){
                         //System.out.println("FOLLOW WALL");
                         //setTranslationalVelocity(1);
-                        followWall();
+                        followWall(side);
                     }
                     if(findWall) {
-                        searchForWall();
+                        searchForWall(side);
                     }
 
                     if(moveRandomly){
@@ -252,72 +266,131 @@ public class WallFollower extends Agent {
     /**
      *
      */
-    private void followWall(){
+    private void followWall(String side){
 
-        double sonar2 = sonars.getMeasurement(2);
-        double sonar3 = sonars.getMeasurement(3);
-        double sonar4 = sonars.getMeasurement(4);
-        System.out.println("\tFollowing");
-        //keep heading straight
-        if(!((sonar4-0.2) <= sonar2 && sonar2 <= (sonar4 + 0.2)) && !adjusting){
-            //outside courner case
-            System.out.println("Off Heading! Adjust");
-            setTranslationalVelocity(0);
+        if(side.equalsIgnoreCase("left")) {
+            double sonar2 = sonars.getMeasurement(2);
+            double sonar3 = sonars.getMeasurement(3);
+            double sonar4 = sonars.getMeasurement(4);
+            System.out.println("\tFollowing");
+            //keep heading straight
+            if (!((sonar4 - 0.2) <= sonar2 && sonar2 <= (sonar4 + 0.2)) && !adjusting) {
+                //outside courner case
+                System.out.println("Off Heading! Adjust");
+                setTranslationalVelocity(0);
 
-            setRotationalVelocity(0);
-            adjusting = true;
-        }else if(((sonar4-0.1) <= sonar2 && sonar2 <= (sonar4 + 0.1)) && adjusting){
-            adjusting = false;
-            System.out.println("ON Heading! Stop Adjusting");
-            setRotationalVelocity(0);
-            setTranslationalVelocity(1);
-        }else {
-            if(Double.isInfinite(sonar2) || Double.isInfinite(sonar4)){
-                System.out.println("Sonar 2 or 4 is infinite");
-                setTranslationalVelocity(0.3);
-            }else {}
-        }
-
-        //heading not straight adjust heading
-        if(adjusting){
-            System.out.println("ADJUSTING");
-            if(sonar2 > sonar4+0.1 || (Double.isInfinite(sonar4) && sonar2 > .75)) {
-                System.out.println("Rotate left");
-                setRotationalVelocity(Math.PI / 6);
-            }else if (sonar2 < sonar4-0.1 || (Double.isInfinite(sonar4) && sonar2 < .75) || (Double.isInfinite(sonar4) && sonars.hasHit(1))){
-                System.out.println("Rotate right");
-                if(Double.isInfinite(sonar4)){
-                    setTranslationalVelocity(0);
+                setRotationalVelocity(0);
+                adjusting = true;
+            } else if (((sonar4 - 0.1) <= sonar2 && sonar2 <= (sonar4 + 0.1)) && adjusting) {
+                adjusting = false;
+                System.out.println("ON Heading! Stop Adjusting");
+                setRotationalVelocity(0);
+                setTranslationalVelocity(1);
+            } else {
+                if (Double.isInfinite(sonar2) || Double.isInfinite(sonar4)) {
+                    System.out.println("Sonar 2 or 4 is infinite");
+                    setTranslationalVelocity(0.3);
+                } else {
                 }
-                setRotationalVelocity(-Math.PI / 6);
-            }else{
-                //adjusting = false;
+            }
+
+            //heading not straight adjust heading
+            if (adjusting) {
+                System.out.println("ADJUSTING");
+                if (sonar2 > sonar4 + 0.1 || (Double.isInfinite(sonar4) && sonar2 > .75)) {
+                    System.out.println("Rotate left");
+                    setRotationalVelocity(Math.PI / 6);
+                } else if (sonar2 < sonar4 - 0.1 || (Double.isInfinite(sonar4) && sonar2 < .75) || (Double.isInfinite(sonar4) && sonars.hasHit(1))) {
+                    System.out.println("Rotate right");
+                    if (Double.isInfinite(sonar4)) {
+                        setTranslationalVelocity(0);
+                    }
+                    setRotationalVelocity(-Math.PI / 6);
+                } else {
+                    //adjusting = false;
+                }
+            }
+
+            //stay close to the wall
+            if (!(0.7 < sonar3 && sonar3 < 0.73) && getTranslationalVelocity() != 0) {
+                if (sonar3 < 0.7) {
+                    setRotationalVelocity(-Math.PI / 6);
+                } else if (sonar3 > 0.73) {
+                    setRotationalVelocity(Math.PI / 6);
+                }
+            } else if ((0.7 < sonar3 && sonar3 < 0.73) && !adjusting) {
+                setRotationalVelocity(0);
             }
         }
+        else if (side.equalsIgnoreCase("right")){
+            System.out.println("right");
+            double sonar10 = sonars.getMeasurement(10);
+            double sonar9 = sonars.getMeasurement(9);
+            double sonar8 = sonars.getMeasurement(8);
+            System.out.println("\tFollowing");
+            //keep heading straight
+            if (!((sonar8 - 0.2) <= sonar10 && sonar10 <= (sonar8 + 0.2)) && !adjusting) {
+                //outside courner case
+                System.out.println("Off Heading! Adjust");
+                setTranslationalVelocity(0);
 
-        //stay close to the wall
-        if(!(0.7 < sonar3 && sonar3 < 0.73) && getTranslationalVelocity() != 0){
-            if(sonar3 < 0.7) {
-                setRotationalVelocity(-Math.PI / 6);
-            }else if(sonar3 > 0.73){
-                setRotationalVelocity(Math.PI / 6);
+                setRotationalVelocity(0);
+                adjusting = true;
+            } else if (((sonar8 - 0.1) <= sonar10 && sonar10 <= (sonar8 + 0.1)) && adjusting) {
+                adjusting = false;
+                System.out.println("ON Heading! Stop Adjusting");
+                setRotationalVelocity(0);
+                setTranslationalVelocity(1);
+            } else {
+                if (Double.isInfinite(sonar10) || Double.isInfinite(sonar8)) {
+                    System.out.println("Sonar 2 or 4 is infinite");
+                    setTranslationalVelocity(0.3);
+                } else {
+                }
             }
-        }else if((0.7 < sonar3 && sonar3 < 0.73) && !adjusting){
-            setRotationalVelocity(0);
+
+            //heading not straight adjust heading
+            if (adjusting) {
+                System.out.println("ADJUSTING");
+                if (sonar10 > sonar8 + 0.1 || (Double.isInfinite(sonar8) && sonar10 > .75)) {
+                    System.out.println("Rotate right");
+                    setRotationalVelocity(-Math.PI / 6);
+                } else if (sonar10 < sonar8 - 0.1 || (Double.isInfinite(sonar8) && sonar10 < .75) || (Double.isInfinite(sonar8) && sonars.hasHit(1))) {
+                    System.out.println("Rotate left");
+                    if (Double.isInfinite(sonar8)) {
+                        setTranslationalVelocity(0);
+                    }
+                    setRotationalVelocity(Math.PI / 6);
+                } else {
+                    //adjusting = false;
+                }
+            }
+
+            //stay close to the wall
+            if (!(0.7 < sonar9 && sonar9 < 0.73) && getTranslationalVelocity() != 0) {
+                if (sonar9 < 0.7) {
+                    setRotationalVelocity(Math.PI / 6);
+                } else if (sonar9 > 0.73) {
+                    setRotationalVelocity(-Math.PI / 6);
+                }
+            } else if ((0.7 < sonar9 && sonar9 < 0.73) && !adjusting) {
+                setRotationalVelocity(0);
+            }
+
         }
     }
 
-    private void searchForWall(){
-
-            if(sonars.oneHasHit()){
+    private void searchForWall(String side){
+        if(side.equalsIgnoreCase("left")) {
+            if (sonars.oneHasHit()) {
 
                 boolean proceed = false;
 
-                for(int i = 0; i < sonars.getNumSensors(); i++){
-                    if(sonars.hasHit(i) && sonars.getMeasurement(i) < .75)
+                for (int i = 0; i < sonars.getNumSensors(); i++) {
+                    if (sonars.hasHit(i) && sonars.getMeasurement(i) < .75)
                         proceed = true;
                 }
-                if(proceed) {
+                if (proceed) {
                     //rotate until wall has been found on the front right quadrant
                     setTranslationalVelocity(0);
                     //setRotationalVelocity();
@@ -332,11 +405,40 @@ public class WallFollower extends Agent {
                         setRotationalVelocity(Math.PI / 6);
                     }
                 }
-            }else{
+            } else {
                 setRotationalVelocity(0);
                 setTranslationalVelocity(1);
             }
+        }
+        else if(side.equalsIgnoreCase("right")){
+            if (sonars.oneHasHit()) {
 
+                boolean proceed = false;
+
+                for (int i = 0; i < sonars.getNumSensors(); i++) {
+                    if (sonars.hasHit(i) && sonars.getMeasurement(i) < .75)
+                        proceed = true;
+                }
+                if (proceed) {
+                    //rotate until wall has been found on the front right quadrant
+                    setTranslationalVelocity(0);
+                    //setRotationalVelocity();
+                    if (sonars.getRightQuadrantHits() > 1) {
+                        foundWall = true;
+                        System.out.println("WALL FOUND");
+                        findWall = false;
+                        setRotationalVelocity(0);
+                        setTranslationalVelocity(1);
+                    } else if (getRotationalVelocity() == 0) {
+                        System.out.println("rotaion not 0");
+                        setRotationalVelocity(Math.PI / 6);
+                    }
+                }
+            } else {
+                setRotationalVelocity(0);
+                setTranslationalVelocity(1);
+            }
+        }
 
     }
 
@@ -354,8 +456,8 @@ public class WallFollower extends Agent {
         int totalPixelcount = maxY * maxX;
         int totalBluePixels = 0;
 
-         System.out.println("height: " + currentCameraImage.getHeight() +
-                 ", width: " + currentCameraImage.getWidth());
+         //System.out.println("height: " + currentCameraImage.getHeight() +
+         //        ", width: " + currentCameraImage.getWidth());
 
         for (int x = 0; x < maxX; x++) {
 
@@ -372,8 +474,8 @@ public class WallFollower extends Agent {
             }
         }
 
-        System.out.println("total pixelcount: " + totalPixelcount +
-                ", total Red pixels: " + totalBluePixels);
+       // System.out.println("total pixelcount: " + totalPixelcount +
+         //       ", total Red pixels: " + totalBluePixels);
         currentBluePixels = totalBluePixels;
         return (double)totalBluePixels / (double)totalPixelcount;
     }

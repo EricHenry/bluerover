@@ -1,6 +1,7 @@
 package communication;
 
 import javax.vecmath.Point3d;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Queue;
 
@@ -14,6 +15,33 @@ public class RobotCommunication {
 
     private static boolean let1Read = false;
     private static boolean let2Read = false;
+
+    private static ArrayList<String[]> robotIDs = new ArrayList<String[]>();
+
+    /**
+     * Creates an id - robotName pair and returns the robot's ID
+     *
+     * @param robotName     - the name of the robot
+     * @return              - the id of the given robot
+     * @throws Exception    - if the max # of registrations have been reached
+     */
+    public static int registerRobot(String robotName) throws Exception{
+        int numberOfRobots = robotIDs.size();
+
+        //can only have a max of 2 robots registered right now
+        if(numberOfRobots < 2) {
+            int currentRobotId = numberOfRobots + 1;
+
+            String[] entry = {Integer.toString(currentRobotId), robotName};
+            robotIDs.add(entry);
+
+            return currentRobotId;
+
+        }else {
+            throw new Exception("Number of allowable registered robots has maxed out.");
+        }
+
+    }
 
     public static boolean canRead(int robotID){
         if(robotID == 1)
