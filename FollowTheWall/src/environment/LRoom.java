@@ -21,13 +21,13 @@ public class LRoom extends EnvironmentDescription {
 
         lShapedRoom(boxLocation);
 
-        WallFollower robot1 = new WallFollower(new Vector3d(-9,0,-4), "chappie", "right");
+        WallFollower robot1 = new WallFollower(new Vector3d(-9,0,-8), "chappie", "right");
         add(robot1);
 
         //RobotCommunication robCom
 
-       // WallFollower robot2 = new WallFollower(new Vector3d(-9,0,-9), "machina", "left");
-       // add(robot2);
+        WallFollower robot2 = new WallFollower(new Vector3d(-9,0,-9), "machina", "left");
+        add(robot2);
 
     }
 

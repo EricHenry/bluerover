@@ -70,11 +70,15 @@ public class RobotCommunication {
 
     public static Point3d removeLocation(int robotID) throws Exception{
 
-        if(robotID == 1 && let1Read)
+        if(robotID == 1 && let1Read) {
+            if(robot2Location.size() == 1)
+                setRead(2,false);
             return robot2Location.remove();
-        else if(robotID == 2 && let2Read)
+        }else if(robotID == 2 && let2Read) {
+            if(robot1Location.size() == 1)
+                setRead(1,false);
             return robot1Location.remove();
-        else
+        }else
             throw new Exception("Other robots location queue is empty");
     }
 
