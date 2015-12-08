@@ -22,6 +22,7 @@ public class WallFollower extends Agent {
 
     private String robotName;
     private int robotID;
+    private String testNum;
 
     private RangeSensorBelt sonars, bumpers;
     private CameraSensor camera;
@@ -63,12 +64,14 @@ public class WallFollower extends Agent {
     private Point3d targetLocation = new Point3d();
 
 
-    public WallFollower(Vector3d position, String name, String side){
+    public WallFollower(Vector3d position, String name, String side, String testNumber){
         super(position, name);
 
         robotName = name;
 
         this.side = side;
+
+        testNum = testNumber;
 
         try {
             robotID = RobotCommunication.registerRobot(name);
@@ -103,7 +106,7 @@ public class WallFollower extends Agent {
 
         //if(getCounter() % 5 == 0) {
         //    System.out.println(getCounter());
-            trackCoordinates("1");
+
         //}
         /*
         //find wall
@@ -121,13 +124,7 @@ public class WallFollower extends Agent {
         }
 
 
-        if(getCounter() % 500 == 0 && getCounter() > 1){
-            if(whosTurn == Algorithm.FOLLOWWALL){
-                whosTurn = Algorithm.MOVERADOMLY;
-            }else{
-                whosTurn = Algorithm.FOLLOWWALL;
-            }
-        }
+
 
         /**currentCoords = new Point3d();
 
@@ -137,6 +134,17 @@ public class WallFollower extends Agent {
         if(!missionComplete) {
             //if the item isnt found
             //  two behaviors: either follow a wall OR move randomly
+
+            trackCoordinates(testNum);
+
+            if(getCounter() % 500 == 0 && getCounter() > 1){
+                if(whosTurn == Algorithm.FOLLOWWALL){
+                    whosTurn = Algorithm.MOVERADOMLY;
+                }else{
+                    whosTurn = Algorithm.FOLLOWWALL;
+                }
+            }
+
             if (searching) {
                 //follow wall-
                 // choose either the right or left side
@@ -179,18 +187,6 @@ public class WallFollower extends Agent {
                     //  and attempt to move toward it
                 } else if (currentBluePixels > 1 || seenBlue) {
 
-                    //Point3d currentCoords = new Point3d();
-
-                    //getCoords(currentCoords);
-
-                    //RobotCommunication.addLocation(robotID, currentCoords);
-
-                    // System.out.println("INSIDE RED Pixel Count\n\tPixelcount is: " + currentRedPixels);
-
-                    /**if (seenBlue)
-                        System.out.println("SeenRed");
-                    else
-                        System.out.println("Current Red pixels > 1"); */
 
                     seenBlue = true;
 
@@ -239,11 +235,11 @@ public class WallFollower extends Agent {
 
                     if (bumpers.oneHasHit()) {
 
-                        System.out.println("\t  bumpers has one hit");
+                       // System.out.println("\t  bumpers has one hit");
                         recoverFromCollision();
 
                     } else if (left < 0.7 || front < 0.7 || right < 0.7) {
-                          System.out.println("\t sonar has one hit");
+                         // System.out.println("\t sonar has one hit");
                         avoidCollision();
                     } else if(isCloserToTarget()){
 
@@ -344,9 +340,10 @@ public class WallFollower extends Agent {
                 double timeToGoal = getLifeTime();
                 missionComplete = true;
                 System.out.println("Robot: " + robotName + ", id: " + robotID + " is complete");
-
+                System.out.println("Test number: " + testNum);
                 System.out.println("Total Duration: " + timeToGoal);
                 System.out.println("Total Distance: " + getOdometer());
+                System.out.println("--------------------------------------------------------------------");
 
 
                 //currentCoords = new Point3d();
@@ -362,7 +359,7 @@ public class WallFollower extends Agent {
 
     private boolean isCloserToTarget(){
 
-        System.out.println("CHEKCING");
+        //System.out.println("CHEKCING");
 
         double lastX = lastCoords.getX();
         double lastZ = lastCoords.getZ();
@@ -376,10 +373,10 @@ public class WallFollower extends Agent {
         double lastDistance = getDistance(lastX, lastZ, targetX, targetZ);
         double thisDistance = getDistance(currentX, currentZ, targetX, targetZ);
 
-        System.out.println("Last distance: " + lastDistance + ", This distance: " + thisDistance);
+        //System.out.println("Last distance: " + lastDistance + ", This distance: " + thisDistance);
 
         if(lastDistance <= thisDistance){
-            System.out.println("MOving further away");
+          //  System.out.println("MOving further away");
             return false;
         }else{
            return true;
@@ -613,7 +610,7 @@ public class WallFollower extends Agent {
 
     public void trackCoordinates(String testNum){
         //System.out.println("TRACK COORDS");
-        String fileName = "Assignment4/Random_Test" + testNum + "s_" + robotName + ".txt";
+        String fileName = "Assignment4/WallFollow_Test_" + testNum + "_Robot_" + robotName + ".txt";
 
         //currentCoords = ;
 
@@ -625,7 +622,7 @@ public class WallFollower extends Agent {
         lastCoords.set(currentCoords.getX(), currentCoords.getY(), currentCoords.getZ());
         getCoords(currentCoords);
 
-        System.out.println("AFTER x= " + currentCoords.getX() + " z= " + currentCoords.getZ());
+        //System.out.println("AFTER x= " + currentCoords.getX() + " z= " + currentCoords.getZ());
 
         try {
             PrintWriter writer = new PrintWriter(new BufferedWriter(new FileWriter(fileName, true)));
