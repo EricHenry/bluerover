@@ -43,6 +43,11 @@ public class RobotCommunication {
 
     }
 
+    /**
+     *
+     * @param robotID
+     * @return
+     */
     public static boolean canRead(int robotID){
         if(robotID == 1)
             return let1Read;
@@ -50,6 +55,11 @@ public class RobotCommunication {
             return let2Read;
     }
 
+    /**
+     * This gives the ability to tell the other robot if there is something to read from the queue
+     * @param robotID -> The robot's identifier
+     * @param canRead -> Whether or not the robot can read the queue
+     */
     public static void setRead(int robotID, boolean canRead){
         if(robotID == 1)
             let2Read = canRead;
@@ -57,6 +67,11 @@ public class RobotCommunication {
             let1Read = canRead;
     }
 
+    /**
+     * This function allows a robot to a location to the queue
+     * @param robotID -> The robot robot who is pushing onto the queue
+     * @param currentLocation -> the location to push to the queue
+     */
     public static void addLocation(int robotID, Point3d currentLocation){
         if(robotID == 1){
            // System.out.println("ROBOT 1\n\tcurrent location added - X:= " + currentLocation.getX() + ", Y: " + currentLocation.getZ());
@@ -68,6 +83,12 @@ public class RobotCommunication {
         }
     }
 
+    /**
+     * Gets the next location off the queue
+     * @param robotID -> the identification of the robot
+     * @return -> the next location as a Point3d Object
+     * @throws Exception -> id the queue is empty
+     */
     public static Point3d removeLocation(int robotID) throws Exception{
 
         if(robotID == 1 && let1Read) {

@@ -15,10 +15,12 @@ import javax.vecmath.Vector3f;
  */
 public class LRoom extends EnvironmentDescription {
 
+    /**
+     * Add the robots to the environemnt
+     * @param boxLocation
+     * @param testNum
+     */
     public LRoom(Vector3d boxLocation, String testNum) {
-        light1IsOn = true;
-        light2IsOn = false;
-
         lShapedRoom(boxLocation);
 
         WallFollower robot1 = new WallFollower(new Vector3d(-9,0,-8), "chappie", "right", testNum);
@@ -31,6 +33,10 @@ public class LRoom extends EnvironmentDescription {
 
     }
 
+    /**
+     * Create the environment for the robot and boxes to reside.
+     * @param boxLocation
+     */
     public void lShapedRoom(Vector3d boxLocation) {
         Wall bottomOfL = new Wall(new Vector3d(10, 0, 0), 20, 1, this);
         bottomOfL.setColor(new Color3f(0, 0, 0));

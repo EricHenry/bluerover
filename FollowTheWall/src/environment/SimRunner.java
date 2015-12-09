@@ -9,6 +9,10 @@ import javax.vecmath.Vector3d;
  */
 public class SimRunner {
 
+    /**
+     * Runs the simulation
+     * @param args
+     */
     public static void main(String[] args) {
         // request antialising
         System.setProperty("j3d.implicitAntialiasing", "true");
@@ -20,9 +24,9 @@ public class SimRunner {
         //Simbad frame = new Simbad(new LRoom(new Vector3d(-5, 0, -2), "5"), false);
         //Simbad frame = new Simbad(new LRoom(new Vector3d(8, 0, 3), "6"), false);
         //Simbad frame = new Simbad(new LRoom(new Vector3d(-6, 0, -7), "7"), false);
-        //Simbad frame = new Simbad(new LRoom(new Vector3d(6, 0, 7), "8"), false);
+        Simbad frame = new Simbad(new LRoom(new Vector3d(6, 0, 7), "8"), false);
         //Simbad frame = new Simbad(new LRoom(new Vector3d(2, 0, 2), "9"), false);
-        Simbad frame = new Simbad(new LRoom(new Vector3d(-7, 0, -4), "10"), false);
+        //Simbad frame = new Simbad(new LRoom(new Vector3d(-7, 0, -4), "10"), false);
 
     }
 
